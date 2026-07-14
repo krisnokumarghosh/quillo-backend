@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { MongoClient, Db } from "mongodb";
+import { MongoClient, Db, ObjectId } from "mongodb";
 
 dotenv.config();
 
@@ -120,6 +120,19 @@ app.get("/api/blogs/uid/:id", async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to get user blogs " });
+  }
+});
+
+app.get("/api/blog/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const result = await db
+      .collection("blogs")
+      .findOne({ _id: new ObjectId(id) });
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get blog" });
   }
 });
 
