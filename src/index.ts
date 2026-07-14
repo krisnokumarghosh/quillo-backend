@@ -53,6 +53,76 @@ app.get("/api/users", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/api/blog", async (req: Request, res: Response) => {
+  try {
+    const data = req.body;
+    const updatedData = {
+      ...data,
+      createdAt: new Date(),
+    };
+    const result = await db.collection("blogs").insertOne(updatedData);
+    res.status(201).send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create blog" });
+  }
+});
+
+app.get("/api/all/blogs", async (req: Request, res: Response) => {
+  try {
+    const { search, category, page = "1", limit = "8" } = req.query;
+
+    const query: Record<string, unknown> = {};
+
+    if (search && typeof search === "string") {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { tags: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    if (category && typeof category === "string" && category !== "All") {
+      query.category = category;
+    }
+
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 8;
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await db.collection("blogs").countDocuments(query);
+
+    const blogs = await db
+      .collection("blogs")
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .toArray();
+
+    const hasMore = skip + blogs.length < total;
+
+    res.status(200).send({ blogs, total, hasMore });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get blogs" });
+  }
+});
+app.get("/api/blogs/uid/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const query = {
+      userId: id,
+    };
+    const result = await db.collection("blogs").find(query).toArray();
+    res.status(200).send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get user blogs " });
+  }
+});
+
 // ---------- Start Server ----------
 const startServer = async () => {
   await connectToMongoDB();
