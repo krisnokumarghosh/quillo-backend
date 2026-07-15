@@ -43,15 +43,6 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // Example route using the database
-app.get("/api/users", async (req: Request, res: Response) => {
-  try {
-    const users = await db.collection("users").find().toArray();
-    res.json(users);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
 
 app.post("/api/blog", async (req: Request, res: Response) => {
   try {
@@ -133,6 +124,70 @@ app.get("/api/blog/:id", async (req: Request, res: Response) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to get blog" });
+  }
+});
+
+app.get("/api/users", async (req: Request, res: Response) => {
+  try {
+    const result = await db.collection("user").find().toArray();
+    res.status(200).send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get users " });
+  }
+});
+
+app.delete("/api/d/blog/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const result = await db
+      .collection("blogs")
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Blog deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete blog",
+    });
+  }
+});
+
+app.delete("/api/user/d/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const result = await db
+      .collection("user")
+      .deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete User",
+    });
   }
 });
 
